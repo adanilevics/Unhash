@@ -654,7 +654,7 @@ int main() {
 
 		add brute forcing for sha512
   		for brute forcing add options to select character types - only uppercase or uppercase + numbers ect
-    		fix sha512all output
+    		fix sha512all output in console
    
 	**/	
 	
