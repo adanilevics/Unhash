@@ -6,6 +6,7 @@
 #include <ctime>
 #include <cstring>
 #include <bits/stdc++.h>
+#include <filesystem>
 
 #define uchar unsigned char
 #define uint unsigned int
@@ -23,6 +24,7 @@
 
 typedef unsigned long long int int64;
 using namespace std;
+namespace fs = std::filesystem;
 
 /// SHA512 ENCRYPTION
 
@@ -447,7 +449,7 @@ string trim(const string& str) {
     return string(start, end + 1);
 }
 
-void findsha256(const string& encryptedpassword, const string& filename) {
+void findsha256(const string& providedhash, const string& filename) {
     string line;
     bool found = false;
 
@@ -455,14 +457,13 @@ void findsha256(const string& encryptedpassword, const string& filename) {
     if (list.is_open()) {
         while (getline(list, line)) {
             line = trim(line);
-
             char* data = new char[line.size() + 1];
-            std::strcpy(data, line.c_str());
+            strcpy(data, line.c_str());
             string encryptedline = SHA256(data);
             delete[] data;
-
-            if (encryptedline == encryptedpassword) {
-                cout << "Found hash: " << encryptedline << endl;
+            cout << "\rCurrent occurrence hash: " << encryptedline << flush;
+            if (encryptedline == providedhash) {
+                cout << "\nFound hash: " << encryptedline << endl;
                 cout << "Decrypted string: " << line << endl;
                 found = true;
                 break;
@@ -478,7 +479,7 @@ void findsha256(const string& encryptedpassword, const string& filename) {
 }
 
 
-void findsha512(const string& encryptedpassword, const string& filename) {
+void findsha512(const string& providedhash, const string& filename) {
     string line;
     bool found = false;
 
@@ -487,7 +488,7 @@ void findsha512(const string& encryptedpassword, const string& filename) {
         while (getline(list, line)) {
             line = trim(line);
             string encryptedline = SHA512(line);
-            if (encryptedline == encryptedpassword) {
+            if (encryptedline == providedhash) {
                 cout << "Found hash: " << encryptedline << endl;
                 cout << "Decrypted string: " << line << endl;
                 found = true;
@@ -503,22 +504,185 @@ void findsha512(const string& encryptedpassword, const string& filename) {
     }
 }
 
+void generate_combinations(const string& all_chars, string current, int length, const string& providedhash, bool& found) {
+    if (length == 0) {
+        char* data = new char[current.size() + 1];
+        strcpy(data, current.c_str());
+        string encryptedoccurance = SHA256(data);
+        delete[] data;
+        cout << "\rCurrent occurrence hash: " << encryptedoccurance << flush;
+        if (encryptedoccurance == providedhash){
+            cout << "\n\nFound hash: " << encryptedoccurance << endl;
+            cout << "Decrypted string: " << current << endl;
+            found = true;
+        }
+        return;
+    }
+
+    for (char c : all_chars) {
+        generate_combinations(all_chars, current + c, length - 1, providedhash, found);
+        if (found) break;
+    }
+}
+
+
+void findsha256bruteforce(const string& providedhash) {
+    string all_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
+    bool found = false;
+
+    for (int length = 1; length <= 4; length++) {
+        if (found) break;
+        cout << "\nGenerating all character combinations of length " << length << "..." << endl;
+        generate_combinations(all_chars, "", length, providedhash, found);
+    }
+
+    if (!found) {
+        cout << "String not found" << endl;
+    }
+}
+
+vector<string> fetchlists() {
+    string dirname = "wordlists";
+    vector<string> lists;
+    fs::path dirpath{ dirname };
+
+    try {
+        if (!fs::exists(dirpath) || !fs::is_directory(dirpath)) {
+            cerr << "Error: Directory 'wordlists' does not exist or is not a directory." << endl;
+            return lists;
+        }
+
+        for (const auto& entry : fs::directory_iterator(dirpath)) {
+            if (entry.is_regular_file()) {
+                lists.push_back(entry.path().filename().string());
+            }
+        }
+    } catch (const fs::filesystem_error& ex) {
+        cerr << "Error: " << ex.what() << endl;
+    }
+
+    return lists;
+}
+
+void findsha256all(vector<string> lists, const string& providedhash) {
+
+    string line;
+    bool found = false;
+    bool broken = false;
+    bool fileOpened = false;
+
+    for (const auto& filename : lists) {
+        ifstream list(filename);
+        if (list.is_open()) {
+            fileOpened = true;
+            string line;
+            while (getline(list, line)) {
+                line = trim(line);
+                char* data = new char[line.size() + 1];
+                strcpy(data, line.c_str());
+                string encryptedline = SHA256(data);
+                delete[] data;
+                cout << "\rCurrent occurrence hash: " << encryptedline << flush;
+                if (encryptedline == providedhash) {
+                    cout << "\nFound hash: " << encryptedline << endl;
+                    cout << "Decrypted string: " << line << endl;
+                    found = true;
+                    list.close();
+                    broken = true;
+                    break;
+                }
+            }
+            list.close();
+            if (found) {
+                break;
+            }
+        }
+    }
+
+    // Display error message only if no file was successfully opened
+    if (!fileOpened) {
+        cout << "Unable to open any files in the list" << endl;
+    } else if (!found) {
+        cout << "String not found in any word list" << endl;
+    }
+}
+
+void findsha512all(vector<string> lists, const string& providedhash) {
+
+    string line;
+    bool found = false;
+    bool broken = false;
+    bool fileOpened = false;
+
+    for (const auto& filename : lists) {
+        ifstream list(filename);
+        if (list.is_open()) {
+            fileOpened = true;
+            string line;
+            while (getline(list, line)) {
+                line = trim(line);
+                string encryptedline = SHA512(line);
+                cout << "\rCurrent occurrence hash: " << encryptedline << flush;
+                if (encryptedline == providedhash) {
+                    cout << "\nFound hash: " << encryptedline << endl;
+                    cout << "Decrypted string: " << line << endl;
+                    found = true;
+                    list.close();
+                    broken = true;
+                    break;
+                }
+            }
+            list.close();
+            if (found) {
+                break;
+            }
+        }
+    }
+
+    // Display error message only if no file was successfully opened
+    if (!fileOpened) {
+        cout << "Unable to open any files in the list" << endl;
+    } else if (!found) {
+        cout << "String not found in any word list" << endl;
+    }
+}
+
 
 int main() {
 
-    string wordlist = "wordlist.txt";
 
-    /// string encrypted using sha256 using an outside source, string is inside the word list unencrypted
-    string string256 = "3ea1c70e23b87d5a712df9ae9d60722d7cf40ede1bf4782b897b3d9dd28b9474";
-    cout << "Hash to find in sha256: " << string256 << endl;
-    findsha256(string256, wordlist);
+    /// string hashed using sha256 using an outside source, string is inside the word list unencrypted, this uses all lists in wordlists folder
+    //string string256 = "a0ec06301bf1814970a70f89d1d373afdff9a36d1ba6675fc02f8a975f4efaeb";
+    //cout << "Hash to find in sha256: " << string256 << endl;
+    //findsha256all(fetchlists(), string256);
 
-    cout << endl;
-
-    /// string encrypted using sha512 using an outside source, string is inside the word list unencrypted
-    string string512 = "4087afd4bce192a777fa3790968f968061c674930d4fa9f9fb72953bd0d931963b33c1328f45b6e5d16e9ced0875289a6226a283ce12d8108cc379d9e662577f";
+    /// string hashed using sha512 using an outside source, string is inside the word list unencrypted, this uses all lists in wordlists folder
+    string string512 = "7da6477e4cdd0885257edb6f981077f5b42563153f9c0eb6d2200af35e4288ad97cd78b9d60b524076a5351aceee415542f272cf84b748065de0cbaa438d1290";
     cout << "Hash to find in sha512: " << string512 << endl;
-    findsha512(string512, wordlist);
+    findsha512all(fetchlists(), string512);
+
+    /// string hashed using sha512 using an outside source, string is inside the word list unencrypted, this uses a specified word list from the root folder
+    //string wordlist = "wordlist.txt";
+    //string string512 = "4087afd4bce192a777fa3790968f968061c674930d4fa9f9fb72953bd0d931963b33c1328f45b6e5d16e9ced0875289a6226a283ce12d8108cc379d9e662577f";
+    //cout << "Hash to find in sha512: " << string512 << endl;
+    //findsha512(string512, wordlist);
+
+    /// string hashed using sha256 using an outside source, string is inside the word list unencrypted, this uses a specified word list from the root folder
+    //string string256 = "a517460e7f774fc63c84467f6323c16dbcb7d8fd699ccdb4d1ff8140d8565865";
+    //cout << "Hash to find in sha256: " << string256 << endl;
+    //findsha256(string256, wordlist);
+
+
+    /// string hashed using sha256 using an outside souce, hashed content is "c"
+    //string string256;
+    //cout << "Enter hash :";
+    //cin >> string256;
+    //string string256brute = "2e7d2c03a9507ae265ecf5b5356885a53393a2029d241394997265a1a25aefc6";
+    //cout << "Hash to find in sha256: " << string256 << endl;
+    //findsha256bruteforce(string256);
+
+
+
 
     return 0;
 }
