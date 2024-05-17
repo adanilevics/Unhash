@@ -1,5 +1,5 @@
 Finds the contents of a hash by hashing words from a word list, compares the hash to the specified hash, provides the unhashed equivalent.
-Brute force way of unhashing.
+Also supports brute force - guessing all possible number, letter and symbol combinations for a hash.
 
 Supports SHA-512 and SHA-256 hashes.
 
