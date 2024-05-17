@@ -650,6 +650,14 @@ void findsha512all(vector<string> lists, const string& providedhash) {
 
 int main() {
 
+	/**	TODO
+
+		add brute forcing for sha512
+  		for brute forcing add options to select character types - only uppercase or uppercase + numbers ect
+    		fix sha512all output
+   
+	**/	
+	
 
     /// string hashed using sha256 using an outside source, string is inside the word list unencrypted, this uses all lists in wordlists folder
     //string string256 = "a0ec06301bf1814970a70f89d1d373afdff9a36d1ba6675fc02f8a975f4efaeb";
