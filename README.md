@@ -6,3 +6,10 @@ Supports SHA-512 and SHA-256 hashes.
 ![image](https://github.com/adanilevics/Unhash/assets/110359798/daec9b90-0648-471e-a4e8-6875718b0787)
 
 See main function for use examples.
+
+
+TODO :
+
+  organize functions to files
+  fix sha512 output in console
+  add more brute forcing customization options
