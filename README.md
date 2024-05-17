@@ -10,6 +10,7 @@ See main function for use examples.
 
 TODO :
 
-  organize functions to files
-  fix sha512 output in console
-  add more brute forcing customization options
+  organize functions to files,
+  fix sha512 output in console,
+  add more brute forcing customization options,
+  use multiple threads and divide their use evenly across the possible outcomes
